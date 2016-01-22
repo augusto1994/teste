@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Teste</title>
+
+        <script src="cjogo.js"></script>
+
+        <script>
+            var tiles_livres = [0,1,6,7, 12,13,16,17,
+                22,23,28,29, 32,33,38,39, 44,45,48,49,
+                52,53, 64,65, 80,81, 96,97,
+                102,103,108,109, 112,113,118,119,
+                124,125,128,129, 134,135,140,141, 196];
+            var tiles_buraco = [100,116,117,132,133,
+                146,162,163,178,179, 152,168,169,184,185];
+
+            var imagem_heroi_normal = 0;
+            var imagem_heroi_s = 1;
+            var imagem_heroi_morto = 2;
+
+            var heroi, pote, estrelas, caixas, fogos, pessoas, menino;
+
+            var segurando_pote = false;
+            var morreu = false;
+
+
+            function roda()
+            {
+                inicializa( processa, carregou_mapa, animacao );
+
+                carrega_imagens([ "tiles.png", "tiles2.png", "sprites.png" ]);
+                carrega_mapa( "fase2.tmx" );
+
+                //modo_debug(true);
+
+          	    pronto();
+            }
+
+            function carregou_mapa()
+            {
+                mapa_config_tiles( "livre", tiles_livres );
+                mapa_config_tiles( "buraco", tiles_buraco );
+                mapa_config_tiles( "solido", null ); // o resto
+
+                heroi = sprite_do_mapa("heroi");
+                camera_segue( heroi );
+
+                estrelas = sprites_do_mapa( "estrela" );
+                pote = sprite_do_mapa( "pote" );
+                caixas = sprites_do_mapa( "caixa" );
+                fogos = sprites_do_mapa( "fogo" );
+                pessoas = sprites_do_mapa( "pessoa" );
+
+                menino = procura_sprite_na_lista( pessoas, "im=29" );
+                define_caminho("circulando", "x+1, x+1, x+1, y+1,y+1, x-1, x-1, x-1, y-1,y-1");
+                sprite_segue_caminho( menino, ["circulando"] );
+
+                define_caminho("indo", "x+1");
+                define_caminho("voltando", "x-1");
+
+                sprites_seguem_caminho( fogos, ["indo","voltando"] );
+            }
+
+            function animacao()
+            {
+                if (animacao_freq(4)) move_sprite_por_caminho(menino);
+
+                for (var i = 0; i < fogos.length; i++)
+                {
+                    var f = fogos[i];
+
+                    move_sprite_por_caminho(f);
+
+                    if (sprite_em_tile(f, "solido") || fora_do_mapa(f))
+                    {
+                        volta_posicao_anterior(f);
+
+                        sprite_troca_caminho(f);
+                        f.flipx = !f.flipx;
+
+                        // já move logo 1 etapa no novo caminho (efeito visual melhor)
+                        move_sprite_por_caminho(f);
+                    }
+                }
+
+                if (alguem_da_lista_com_mesma_posicao(heroi, fogos) != null)
+                {
+                    morreu = true;
+                    heroi.im = imagem_heroi_morto;
+                }
+            }
+
+            function processa()
+            {
+                if ( morreu ) return;
+
+
+                move_sprite_por_teclado(heroi);
+
+                if ( teclado.space )
+                {
+                    if ( mapa_get_tile(heroi.x+1, heroi.y) == 193)
+                        mapa_set_tile(heroi.x+1, heroi.y, 194);
+                    else if ( mapa_get_tile(heroi.x+1, heroi.y) == 194)
+                        mapa_set_tile(heroi.x+1, heroi.y, 0);
+
+                    else if (mesma_posicao(heroi,pote) && !segurando_pote)
+                        segurando_pote = true;
+                    else if (segurando_pote)
+                    {
+                        segurando_pote = false;
+                        pote.x = heroi.x + 1;
+                        pote.y = heroi.y;
+
+                        if (mapa_get_tile(pote.x, pote.y) == 192)
+                            alert("vc venceu!");
+                    }
+                }
+
+                deixa_dentro_do_mapa( heroi );
+
+                // colisao tiles
+                if ( sprite_em_tile(heroi, "solido") )
+                    volta_posicao_anterior( heroi );
+
+                else if (sprite_em_tile(heroi, "buraco") && heroi.im != imagem_heroi_s)
+                {
+                    morreu = true;
+                    sprite_animacao( heroi, "scale 1 -> 0.1, alpha 1 -> 0", 5 );
+                }
+                else
+                {
+                    var bateu_caixa = alguem_da_lista_com_mesma_posicao(heroi, caixas);
+                    if (bateu_caixa != null)
+                    {
+                        move_sprite_na_mesma_direcao( bateu_caixa, heroi );
+                        if ( sprite_em_tile(bateu_caixa, 'solido') )
+                        {
+                            volta_posicao_anterior( bateu_caixa );
+                            volta_posicao_anterior( heroi );
+                        }
+                        else if (sprite_em_tile(bateu_caixa, "buraco"))
+                        {
+                            sprite_animacao( bateu_caixa, "scale 1 -> 0.1, alpha 1 -> 0", 5, function(){
+
+                                if (mapa_get_tile(bateu_caixa.x, bateu_caixa.y) == 100)
+                                    mapa_set_tile( bateu_caixa.x, bateu_caixa.y, 196 );
+
+                                sprite_desaparece( bateu_caixa );
+                            } );
+                        }
+                    }
+                    else if (segurando_pote)
+                    {
+                        pote.x = heroi.x;
+                        pote.y = heroi.y - 0.5;
+                        pote.desenha_acima_dos_outros = true;
+                    }
+                    else
+                    {
+                        var alguma_estrela = alguem_da_lista_com_mesma_posicao(heroi, estrelas);
+                        if (alguma_estrela != null)
+                        {
+                            sprite_desaparece(alguma_estrela);
+
+                            heroi.im = imagem_heroi_s;
+                            setTimeout(function() {
+                                heroi.im = imagem_heroi_normal;
+                            }, 4000 );
+                        }
+                        else
+                        {
+                            var msg = document.getElementById("msg");
+                            var alguma_pessoa = alguem_da_lista_com_mesma_posicao(heroi, pessoas);
+
+                            if (alguma_pessoa != null)
+                            {
+                                var r = tela.getBoundingClientRect();
+
+                                if (alguem_da_lista_perto(alguma_pessoa, caixas, 2))
+                                    msg.innerHTML = "E essa caixa aí? Você está levando para onde?";
+                                else
+                                    msg.innerHTML = alguma_pessoa.extras.fala;
+                                var rm = msg.getBoundingClientRect();
+
+                                var sp = sprite_get_tela_pos(alguma_pessoa);
+                                var x = r.x + sp.x - rm.width/2;
+                                var y = r.y + sp.y - rm.height - 32;
+                                msg.style.left = x + "px";
+                                msg.style.top = y + "px";
+
+                                msg.style.opacity = 1;
+                                msg.momento = Date.now();
+                            }
+                            else
+                                // não tem ninguem? retira a msg. mas se uma msg tinha acabado
+                                // de aparecer (e a pessoa saiu fora), deixa uns segs.
+                                if (msg.momento && Date.now() - msg.momento >= 2000)
+                                    msg.style.opacity = 0;
+                        }
+                    }
+                }
+            }
+        </script>
+
+        <style>
+            #msg
+            {
+                transition: opacity 1s;
+                opacity: 0;
+
+                color: #FFF;
+                font-family: "Ubuntu";
+                font-weight: bold;
+                position: absolute;
+                width: 300px;
+                border: 1px solid black;
+                background: transparent linear-gradient(rgba(29, 27, 27, 0.61), rgba(0, 41, 138, 0.79)) repeat scroll 0% 0%;
+                border-radius: 8px;
+                padding: 4px;
+                text-shadow: 0px 0px 2px black;
+                box-shadow: 2px 2px 8px black;
+                z-index: 100;
+            }
+        </style>
+    </head>
+
+
+    <body onload="roda()">
+
+        <canvas id="tela" width="640" height="480">
+        </canvas>
+        <div id="msg"></div>
+
+    </body>
+</html>

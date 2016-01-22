@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Teste</title>
+
+        <script src="jogo.js"></script>
+
+        <script>
+            var sprite1 = {
+                arq: "gp1.png", x: 0, y: 0, w:64, h:64
+            };
+            
+            var sprite2 = {
+                arq: "gcaixa.png", x:50, y:80, w:64, h:64
+            };
+            
+            var sprite3 = {
+                arq: "gfogo.png", x:0, y:80, w:64, h:64  
+            };
+            
+            function roda()
+            {
+                inicializa( carregou, processa );
+                
+                carrega_imagem( "gp1.png" );
+                carrega_imagem( "gcaixa.png" );
+                carrega_imagem( "gescudo.png" );
+                carrega_imagem( "gfogo.png" );
+            }
+            
+            function carregou(arqs)
+            {
+                if (arqs == 4) pronto(75);
+            }
+
+            function processa()
+            {
+                if ( teclado.left )
+                    sprite1.x -= 4;
+                else if ( teclado.right )
+                    sprite1.x += 4;
+
+                if ( teclado.up )
+                    sprite1.y -= 4;
+                else if ( teclado.down )
+                    sprite1.y += 4;
+                
+                desenha_quad( 0,0,640,480, "#208020" );
+                
+                desenha_imagem( sprite1.arq, sprite1.x, sprite1.y ); 
+                desenha_imagem( sprite2.arq, sprite2.x, sprite2.y );
+
+                desenha_imagem( "gescudo.png", sprite1.x, sprite1.y );
+                
+                var cor = "#ff0000";
+                if ( colisao(sprite1, sprite2) )
+                    cor = "#ffff00";
+
+                if ( colisao(sprite1, sprite3) )
+                    cor = "#ffff00";
+
+                desenha_quad_borda( sprite1.x, sprite1.y, sprite1.w, sprite1.h, 2, cor );
+                
+                desenha_imagem( sprite3.arq, sprite3.x, sprite3.y );
+                sprite3.x += 12;
+                if (sprite3.x > 640) sprite3.x = 0;
+            }
+            
+            function colisao(sprite1, sprite2)
+            {
+                var colide_x = (sprite1.x >= sprite2.x && sprite1.x < sprite2.x + sprite2.w) ||
+                    (sprite2.x >= sprite1.x && sprite2.x < sprite1.x + sprite1.w);
+                var colide_y = (sprite1.y >= sprite2.y && sprite1.y < sprite2.y + sprite2.h) ||
+                    (sprite2.y >= sprite1.y && sprite2.y < sprite1.y + sprite1.h);
+                return colide_x && colide_y;
+            }
+        </script>
+
+    </head>
+    
+
+    <body onload="roda()">
+
+        <canvas id="tela" width="640" height="480">
+        </canvas>
+
+    </body>
+</html>

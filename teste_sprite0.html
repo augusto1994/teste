@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Teste</title>
+
+        <script src="jogo.js"></script>
+
+        <script>
+            var sprite1 = {
+                arq: "gp1.png", x: 0, y: 0, w:64, h:64
+            };
+            
+            var sprite2 = {
+                arq: "gcaixa.png", x:50, y:80, w:64, h:64
+            };
+            
+            function roda()
+            {
+                inicializa( carregou, processa );
+                
+                carrega_imagem( "gp1.png" );
+                carrega_imagem( "gcaixa.png" );
+            }
+            
+            function carregou(arqs)
+            {
+                if (arqs == 2) pronto();
+            }
+
+            function processa()
+            {
+                if ( teclado.left )
+                    sprite1.x -= 4;
+                else if ( teclado.right )
+                    sprite1.x += 4;
+
+                if ( teclado.up )
+                    sprite1.y -= 4;
+                else if ( teclado.down )
+                    sprite1.y += 4;
+                
+                desenha_quad( 0,0,640,480, "#208020" );
+                
+                desenha_imagem( sprite1.arq, sprite1.x, sprite1.y ); 
+                desenha_imagem( sprite2.arq, sprite2.x, sprite2.y );
+                
+                var cor = "#ff0000";
+                if ( colisao(sprite1, sprite2) )
+                    cor = "#ffff00";
+
+                desenha_quad_borda( sprite1.x, sprite1.y, sprite1.w, sprite1.h, 2, cor );
+                desenha_quad_borda( sprite2.x, sprite2.y, sprite2.w, sprite2.h, 2, cor );
+            }
+            
+            function colisao(sprite1, sprite2)
+            {
+                var colidir_x=(sprite2.x && sprite1.x < sprite2.x + sprite2.w)
+                ||
+                    (sprite2.x > sprite1.x && sprite2.x < sprite1.x + sprite1.w);
+                
+                var colidir_y=(sprite2.y && sprite1.y < sprite2.y + sprite2.y)
+                ||
+                    (sprite1.y > sprite2.y && sprite2.y < sprite1.y + sprite1.y);
+                
+                return colidir_x && colidir_y;
+   
+                
+            }
+        </script>
+
+    </head>
+    
+
+    <body onload="roda()">
+
+        <canvas id="tela" width="640" height="480">
+        </canvas>
+
+    </body>
+</html>

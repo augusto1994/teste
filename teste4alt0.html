@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Teste</title>
+
+        <script src="jogo.js"></script>
+
+        <script>
+            var tiles_livres = [0,1,16,17,32,33,48,49,64,65,80,81,
+                96,97,112,113,128,129, 6,7,22,23,38,39, 52,53];
+            var tiles_buraco = [100,116,117,132,133,
+                146,162,163,178,179, 152,168,169,184,185];
+            tiles_livres.push.apply(tiles_livres, tiles_buraco);
+
+
+            var heroi = {
+                arq: "p1.png", x: 0, y: 0
+            };
+            
+            var pote = {
+                arq: "pote.png", x: 15, y:2
+            };
+
+            var estrela = {
+                arq: "estrela.png", x: 5, y:12
+            };
+            
+            /*
+                parte 1
+            */
+            var segurando_pote = false;
+
+            function roda()
+            {
+                inicializa( carregou, processa );
+                
+                carrega_imagem( "tiles.png" );
+                carrega_mapa( "level-01.tmx" );
+                
+                carrega_imagem( "p1.png" );
+                carrega_imagem( "p1s.png" );
+                carrega_imagem( "p1m.png" );
+                
+                carrega_imagem( "pote.png" );
+                carrega_imagem( "estrela.png" );
+            }
+            
+            function carregou(arqs)
+            {
+                if (arqs == 7) pronto();
+            }
+
+            function processa()
+            {
+                var x_anterior = heroi.x;
+                var y_anterior = heroi.y;
+                                
+                /*
+                    parte 2 
+                */
+                if ( teclado.left )
+                    heroi.x--;
+                else if ( teclado.right )
+                    heroi.x++;
+                else if ( teclado.up )
+                    heroi.y--;
+                else if ( teclado.down )
+                    heroi.y++;                    
+
+                
+                if ( teclado.space )
+                {
+                    /*
+                        parte 3
+                    */
+                   if(mapa_get_tile(heroi.x+1,heroi.y==193))
+                      && (mapa_set_tile(heroi.x+1,heroi.y==193))
+                    
+                }
+                
+                // colisao tela
+                if (heroi.x < 0) heroi.x = 0;
+                if (heroi.x > 19) heroi.x = 19;
+                if (heroi.y < 0) heroi.y = 0;
+                if (heroi.y > 14) heroi.y = 14;
+                                
+                // colisao tiles
+                var img = mapa_get_tile( heroi.x, heroi.y );
+                if ( tiles_livres.indexOf(img) == -1 )
+                {
+                    heroi.x = x_anterior;
+                    heroi.y = y_anterior;
+                }
+                
+                /**
+                 * parte 4
+                 */
+                
+                
+                
+                
+                desenha_mapa();
+                desenha_imagem( heroi.arq, heroi.x, heroi.y ); 
+                desenha_imagem( pote.arq, pote.x, pote.y );
+                desenha_imagem( estrela.arq, estrela.x, estrela.y );
+            }
+        </script>
+
+    </head>
+    
+
+    <body onload="roda()">
+
+        <canvas id="tela" width="640" height="480">
+        </canvas>
+
+    </body>
+</html>
